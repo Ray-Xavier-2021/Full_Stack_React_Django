@@ -418,7 +418,7 @@
         # await get response
         const response = await axios.get('http://localhost:8000/api/');
 
-        # Set services variable to response data using setServices func
+        # Set services variable to response data using setVariables func
         setVariable(response.data)
 
         # useEffect() that runs once on load
@@ -492,7 +492,7 @@
       formField.append('file', file)
     }
 
-    // await form data from API
+    // await form data from API w/ POST request
     await axios({
       method: 'post',
       url: 'http://localhost:8000/api/',
@@ -542,18 +542,162 @@
   );
   ```
 
-9. Detail and Update Component
+9. Detail, Update and Delete Component
   - Detail Component
     ```
     react_app_name/src/components/DetailComponent.js
 
+    import axios from 'axios';
+    import React, { useState, useEffect} from 'react';
+    import { useNavigate, useParams } from 'react-router';
+    // import { Card, Button } from 'react-bootstrap';
+    import { Link } from 'react-router-dom';
+
+    const DetailComponent = () => {
+
+      // Set state
+      const [variable, setVariable] = useState('')
+
+      // useParams() hook for id
+      const { id } = useParams();
+
+      // useNavigate for redirect
+      const navigate = useNavigate()
+
+      // Get service function by id w/ API GET request
+      const getDetail = async () => {
+        const { data } = await axios.get(`http://localhost:8000/api/${id}/`)
+        console.log(data)
+        setVariable(data)
+      }
+
+      // useEffect()
+      useEffect(() => {
+        getDetail()
+      }, [])
+
+      - DELETE
+      // Delete by id w/ API delete request
+      const delete = async (id) => {
+        await axios.delete(`http://localhost:800/api/${id}/`)
+        navigate('/')
+      }
+
+      return (
+        <div>
+          <h1>Detail</h1>
+          
+          <div className='single-variable-info'>
+            <img src={ variable.image } height='400' width='400' alt="" />
+            <p>{ variable.name }</p>
+            <p className='variable-price-info'>${ variable.price }</p>
+            <p>{ variable.description }</p>
+            <p className='variable-category-info'>{ variable.category }</p>
+
+            <Link className='btn btn-success m-2' to={`/${variable.id}/update`} >Update</Link>
+            <Link className='btn btn-danger m-2' to={() => delete(variable.id)}>Delete</Link>
+          </div>
+        </div>
+      );
+    };
     ```
 
   - Update Component
     ```
     react_app_name/src/components/UpdateComponent.js
 
+    import React, { useState, useEffect } from 'react';
+    import { useNavigate, useParams } from 'react-router-dom';
+    import axios from 'axios';
+
+    const UpdateComponentFunc = () => {
+
+      // Set state
+      const [file, setFile] = useState(null)
+      const [variable, setVariable] = useState('')
+
+      const navigate = useNavigate();
+      const { id } = useParams();
+
+      // Load service to update by id w/ API GET request
+      const loadUpdate = async () => {
+        const { data } = await axios.get(`http://localhost:8000/api/${id}/`);
+        console.log(data)
+
+        // Preload data
+        setFile(data.file)
+        setVariable(data.variable)
+      }
+
+      useEffect(() => {
+        loadUpdate()
+      }, [])
+
+      // Update service info
+      const UpdateInfo = async () => {
+        let formField = new FormData()
+
+        // Append info
+        formField.append('variable', variable)
+        ...
+
+        // Check if file input is not empty
+        if (file !== null) {
+          formField.append('file', file)
+        }
+
+        // await form data to update from API w/ PUT request
+        await axios({
+          method: 'put',
+          url: `http://localhost:8000/api/${id}/`,
+          data: formField
+        }).then((response) => {
+          console.log(response.data)
+          navigate('/')
+        })
+      }
+
+      return (
+        <div>
+          <h1>Update Page</h1>
+
+          <div className="container">
+            <div className="form-group">
+
+              {/* Image/File Input */}
+              <div className="form-group my-2">
+                <img src={file} height='300' width='200' alt="" />
+                <input
+                  type="file"
+                  className="form-control form-control-lg "
+                  name="file"
+                  src={file}
+                  onChange={(e) => setFile(e.target.files[0])}
+                />
+              </div>
+
+              {/* Variable Input */}
+              <div className="form-group my-2">
+                <input
+                  type="text"
+                  className="form-control form-control-lg "
+                  placeholder='Enter ...'
+                  name="variable"
+                  value={variable}
+                  onChange={(e) => setVariable(e.target.value)}
+                />
+              </div>
+
+              {/* Add button */}
+              <button className='btn btn-success' onClick={UpdateInfo}>Update</button>
+            </div>
+          </div>
+        </div>
+      );
     ```
+
+  - Delete
+    - See Detail, Update and Delete Component: Detail Component - DELETE
 
 ## Link Backend and Frontend
   - Configure Django to Work w/ ReactJS
